@@ -1,0 +1,535 @@
+#!/usr/bin/env node
+
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════╗
+ * ║              AXIS NANO v1.0 — Postinstall Handler                       ║
+ * ║                                                                          ║
+ * ║  Exécuté automatiquement lors de: npm install axis.nano                 ║
+ * ║  Lance la création de la structure et du schema                         ║
+ * ╚══════════════════════════════════════════════════════════════════════════╝
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+const log = {
+  success: (msg) => console.log(`✓ ${msg}`),
+  error: (msg) => console.error(`✗ ${msg}`),
+  info: (msg) => console.log(`ℹ ${msg}`),
+  warn: (msg) => console.warn(`⚠ ${msg}`)
+};
+
+function initAxis() {
+  const projectDir = process.cwd();
+
+  console.log('\n╔════════════════════════════════════════════════════════════════╗');
+  console.log('║        ⬡ AXIS NANO v1.0 — ONE-SHOT INSTALLATION                ║');
+  console.log('╚════════════════════════════════════════════════════════════════╝\n');
+
+  const nodeModulesPath = path.join(projectDir, 'node_modules', 'axis-nano');
+  const isRootInstall = !projectDir.includes('node_modules');
+
+  if (!isRootInstall) {
+    log.warn('Installation détectée dans node_modules. Ignoré.');
+    return;
+  }
+
+  const dirs = ['vue', 'documentation'];
+  dirs.forEach(dir => {
+    const dirPath = path.join(projectDir, dir);
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+      log.success(`Dossier créé: ${dir}/`);
+    } else {
+      log.info(`Dossier existant: ${dir}/`);
+    }
+  });
+
+  try {
+    const sourceAxis = path.join(nodeModulesPath, 'axis-nano.js');
+    const targetAxis = path.join(projectDir, 'axis-nano.js');
+
+    if (fs.existsSync(sourceAxis) && !fs.existsSync(targetAxis)) {
+      fs.copyFileSync(sourceAxis, targetAxis);
+      log.success('axis-nano.js déployé à la racine');
+    } else if (!fs.existsSync(targetAxis)) {
+      log.warn('axis-nano.js non trouvé. Vous devrez le copier manuellement.');
+    }
+  } catch (err) {
+    log.warn(`Copie de axis-nano.js échouée: ${err.message}`);
+  }
+
+  const files = {
+    'index.html': `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AXIS NANO App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div data-axis-root>
+    <main data-axis-view-target data-axis-view="accueil"></main>
+  </div>
+
+  <script src="axis-nano.js" data-axis-auto data-axis-debug></script>
+  <script src="script.js"></script>
+</body>
+</html>`,
+
+    'style.css': `* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-axis-root] {
+  max-width: 800px;
+  width: 100%;
+  padding: 20px;
+}
+
+main {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+button {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+input:focus, textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}`,
+
+    'script.js': `// Global app script
+console.log('[APP] AXIS NANO v1.0 — Application started');
+
+// Listen to view changes
+AxisNano.on('vue:loaded', (viewName) => {
+  console.log('[APP] View loaded:', viewName);
+});
+
+// Listen to errors
+AxisNano.on('api:error', (error) => {
+  console.error('[APP] API error:', error);
+});`,
+
+    'vue/accueil.html': `<div class="welcome-container">
+  <h1>Bienvenue dans AXIS NANO v1.0</h1>
+  <p class="subtitle">Framework décentralisé ultra-léger & sécurisé</p>
+
+  <div class="features">
+    <div class="feature">
+      <h3>🚀 Zero-Config</h3>
+      <p>Tout marche out-of-the-box. Zéro configuration nécessaire.</p>
+    </div>
+    <div class="feature">
+      <h3>🔒 Sécurité Native</h3>
+      <p>Web Crypto intégré. HMAC-SHA256 sans dépendances.</p>
+    </div>
+    <div class="feature">
+      <h3>⚡ Ultra-Léger</h3>
+      <p>Un seul fichier. 27 KB non minifiée, 7 KB gzippée.</p>
+    </div>
+  </div>
+
+  <div class="form-demo">
+    <h3>Essayez les Signaux Axis</h3>
+    <input 
+      type="text" 
+      data-axis-bind="userName" 
+      placeholder="Votre nom"
+    >
+    <button data-axis-on="click:greet">Dire Bonjour</button>
+    
+    <div id="greeting" data-axis-if="greeting" style="margin-top: 1rem; padding: 1rem; background: #f0f7ff; border-radius: 6px; border-left: 4px solid #667eea;">
+      <p id="greeting-text"></p>
+    </div>
+  </div>
+
+  <div class="next-steps">
+    <h3>Prochaines Étapes</h3>
+    <ul>
+      <li>Créez des vues dans <code>/vue</code></li>
+      <li>Utilisez les signaux Axis : <code>data-axis-bind</code>, <code>data-axis-on</code></li>
+      <li>Générez le schema IA : <code>npm run schema</code></li>
+      <li>Lisez la doc : <code>/documentation/README.md</code></li>
+    </ul>
+  </div>
+</div>
+
+<style>
+  .welcome-container {
+    padding: 40px;
+    text-align: center;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 2rem;
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 2rem 0;
+  }
+
+  .feature {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+  }
+
+  .feature h3 {
+    margin-bottom: 0.5rem;
+    color: #667eea;
+  }
+
+  .feature p {
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  .form-demo {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 2rem 0;
+    text-align: left;
+  }
+
+  .form-demo h3 {
+    margin-bottom: 1rem;
+  }
+
+  .form-demo input {
+    margin-bottom: 1rem;
+  }
+
+  #greeting {
+    display: none;
+  }
+
+  .next-steps {
+    margin-top: 2rem;
+    text-align: left;
+    background: #fffbeb;
+    padding: 20px;
+    border-radius: 8px;
+  }
+
+  .next-steps ul {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .next-steps li {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+  }
+
+  .next-steps li:before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: #667eea;
+    font-weight: bold;
+  }
+
+  code {
+    background: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+  }
+</style>
+
+<script>
+  function greet(event) {
+    const userName = axis.state.userName || 'Vous';
+    const greeting = \`Bonjour, \${userName}! 👋\`;
+    
+    // Afficher le message
+    axis.greeting = true;
+    document.querySelector('#greeting-text').textContent = greeting;
+    
+    // Re-évaluer les conditions
+    if (axis._evaluateConditions) {
+      axis._evaluateConditions.forEach(fn => fn());
+    }
+    
+    // Émettre un événement
+    axis.emit('welcome:greeted', { name: userName });
+  }
+</script>`,
+
+    'documentation/README.md': `# AXIS NANO v1.0 — Documentation
+
+> Framework décentralisé ultra-léger | Zéro Dépendance | Sécurité Native
+
+## Installation
+
+\`\`\`bash
+npm install axis.nano && npm run init
+\`\`\`
+
+## Signaux Axis (data-axis-*)
+
+### data-axis-bind
+Lier un champ formulaire à l'état de la vue.
+
+\`\`\`html
+<input data-axis-bind="email" type="email" />
+<textarea data-axis-bind="message"></textarea>
+
+<script>
+  // Accédez via axis.state
+  console.log(axis.state.email);
+</script>
+\`\`\`
+
+### data-axis-on
+Lier un événement DOM à une fonction.
+
+\`\`\`html
+<button data-axis-on="click:handleClick">Click me</button>
+<form data-axis-on="submit:handleSubmit">
+
+<script>
+  function handleClick(event) {
+    console.log('Clicked!');
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    console.log('Form submitted');
+  }
+</script>
+\`\`\`
+
+### data-axis-if
+Rendu conditionnel.
+
+\`\`\`html
+<div data-axis-if="isVisible">Only shown if isVisible is true</div>
+
+<script>
+  axis.isVisible = true;
+</script>
+\`\`\`
+
+### data-axis-for
+Boucle de rendu.
+
+\`\`\`html
+<ul>
+  <li data-axis-for="item in items">{{item.name}}</li>
+</ul>
+
+<script>
+  axis.items = [
+    { name: 'Item 1' },
+    { name: 'Item 2' }
+  ];
+</script>
+\`\`\`
+
+## API
+
+### Express API
+
+\`\`\`javascript
+// Initialiser
+await $AX.$_I({ debug: true });
+
+// Naviguer
+await $AX.$_N('profile');
+
+// Événements
+$AX.$_S('user:login', (user) => { ... });
+$AX.$_E('user:logout', {});
+
+// Données
+const data = await $AX.$_D('/api/users');
+
+// Crypto
+const hash = await $AX.$_C.sha256('data');
+\`\`\`
+
+### Standard API
+
+\`\`\`javascript
+// Même API, noms différents
+await AxisNano.init();
+await AxisNano.navigate('profile');
+AxisNano.on('user:login', callback);
+AxisNano.emit('user:logout', data);
+await AxisNano.data('/api/endpoint');
+await AxisNano.crypto.sha256('data');
+\`\`\`
+
+## Vues (Triplet Auto-Load)
+
+Les vues supportent le chargement automatique en triplet:
+
+- \`login.html\` (obligatoire)
+- \`login.css\` (optionnel)
+- \`login.js\` (optionnel)
+
+\`\`\`html
+<!-- /vue/login.html -->
+<form data-axis-on="submit:handleSubmit">
+  <input data-axis-bind="email" type="email" />
+  <button>Login</button>
+</form>
+
+<script>
+  function handleSubmit(event) {
+    event.preventDefault();
+    axis.data('/api/login', { 
+      body: { email: axis.state.email } 
+    });
+  }
+</script>
+\`\`\`
+
+## Sécurité
+
+### Web Crypto Intégré
+
+\`\`\`javascript
+// SHA-256
+const hash = await axis.crypto.sha256('data');
+
+// HMAC-SHA256
+const sig = await axis.crypto.hmacSha256('message', 'secret');
+
+// Token aléatoire
+const token = axis.crypto.generateToken();
+\`\`\`
+
+### Signatures API (Optionnel)
+
+\`\`\`html
+<script src="axis-nano.js" data-axis-signature></script>
+\`\`\`
+
+Actif: Les requêtes sont signées avec HMAC-SHA256.
+
+## Génération du Schema (Pour l'IA)
+
+\`\`\`bash
+npm run schema
+\`\`\`
+
+Génère \`axis.schema.json\` que l'IA peut lire pour générer du code compatible.
+
+## Déploiement
+
+Comme un site statique classique:
+
+\`\`\`bash
+# Serveur statique
+scp -r votre-app/ user@server:/var/www/html/
+
+# Docker
+docker build -t my-app .
+docker run -p 8000:80 my-app
+
+# CDN (GitHub Pages, Netlify, etc.)
+\`\`\`
+
+---
+
+**AXIS NANO v1.0 — Conçu pour durer, construit pour résister.**
+`
+  };
+
+  Object.entries(files).forEach(([filePath, content]) => {
+    const fullPath = path.join(projectDir, filePath);
+    const fileDir = path.dirname(fullPath);
+
+    if (!fs.existsSync(fileDir)) {
+      fs.mkdirSync(fileDir, { recursive: true });
+    }
+
+    if (!fs.existsSync(fullPath)) {
+      fs.writeFileSync(fullPath, content, 'utf-8');
+      log.success(`Fichier créé: ${filePath}`);
+    } else {
+      log.info(`Fichier existant: ${filePath}`);
+    }
+  });
+
+  console.log('\n✅ AXIS NANO v1.0 installé avec succès!\n');
+  console.log('Structure créée:');
+  console.log('├── index.html');
+  console.log('├── style.css');
+  console.log('├── script.js');
+  console.log('├── axis-nano.js');
+  console.log('├── /vue');
+  console.log('│   └── accueil.html (avec signaux Axis en exemple)');
+  console.log('└── /documentation');
+  console.log('    └── README.md');
+  console.log('\n🚀 Prêt à démarrer!');
+  console.log('   Lancez: npm run dev');
+  console.log('   Ouvrez: http://localhost:8000');
+}
+
+try {
+  initAxis();
+} catch (err) {
+  log.error(`Installation échouée: ${err.message}`);
+  process.exit(1);
+}

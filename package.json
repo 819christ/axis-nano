@@ -1,0 +1,64 @@
+{
+  "name": "axis.nano",
+  "version": "1.0.0",
+  "description": "⬡ Decentralized ultra-lightweight & secure framework | One-Shot Installation | AI-Ready",
+  "main": "axis-nano.js",
+  "types": "axis-nano.d.ts",
+  "bin": {
+    "axis": "axis-nano.js"
+  },
+  "scripts": {
+    "init": "node scripts/init-axis.js",
+    "postinstall": "node scripts/init-axis.js",
+    "schema": "node scripts/generate-schema.js",
+    "dev": "npx http-server -p 8000 -c-1 -o",
+    "serve": "npx http-server -p 8000",
+    "minify": "npx terser axis-nano.js -c -m -o axis-nano.min.js 2>/dev/null || echo 'Terser not installed. Run: npm install --save-dev terser'",
+    "test": "echo 'Tests: open index.html in your browser'",
+    "prepublishOnly": "npm run schema"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/axis-nano/axis-nano.git"
+  },
+  "keywords": [
+    "framework",
+    "decentralized",
+    "lightweight",
+    "zero-dependency",
+    "single-file",
+    "web-crypto",
+    "shadow-dom",
+    "signals",
+    "views",
+    "one-shot",
+    "installation",
+    "ai-ready",
+    "no-code",
+    "grapesjs",
+    "security"
+  ],
+  "author": "AXIS Team",
+  "license": "MIT",
+  "homepage": "https://axis.nano",
+  "bugs": {
+    "url": "https://github.com/axis-nano/axis-nano/issues"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "files": [
+    "axis-nano.js",
+    "scripts/",
+    "README.md",
+    "LICENSE"
+  ],
+  "devDependencies": {
+    "http-server": "^14.0.0",
+    "terser": "^5.0.0"
+  },
+  "optionalDependencies": {},
+  "publishConfig": {
+    "access": "public"
+  }
+}
