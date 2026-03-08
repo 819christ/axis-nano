@@ -44,20 +44,25 @@ function initAxis() {
       log.info(`Dossier existant: ${dir}/`);
     }
   });
-
-  try {
-    const sourceAxis = path.join(nodeModulesPath, 'axis-nano.js');
-    const targetAxis = path.join(projectDir, 'axis-nano.js');
-
-    if (fs.existsSync(sourceAxis) && !fs.existsSync(targetAxis)) {
-      fs.copyFileSync(sourceAxis, targetAxis);
-      log.success('axis-nano.js déployé à la racine');
-    } else if (!fs.existsSync(targetAxis)) {
-      log.warn('axis-nano.js non trouvé. Vous devrez le copier manuellement.');
-    }
-  } catch (err) {
-    log.warn(`Copie de axis-nano.js échouée: ${err.message}`);
+try {
+  let sourceAxis = path.join(nodeModulesPath, 'axis-nano.js');
+  
+  // Si le fichier n'existe pas au premier endroit, essayer le second
+  if (!fs.existsSync(sourceAxis)) {
+    sourceAxis = path.join(nodeModulesPath, 'axis-nano', 'axis-nano.js');
   }
+  
+  const targetAxis = path.join(projectDir, 'axis-nano.js');
+
+  if (fs.existsSync(sourceAxis) && !fs.existsSync(targetAxis)) {
+    fs.copyFileSync(sourceAxis, targetAxis);
+    log.success('axis-nano.js déployé à la racine');
+  } else if (!fs.existsSync(targetAxis)) {
+    log.warn('axis-nano.js non trouvé. Vous devrez le copier manuellement.');
+  }
+} catch (err) {
+  log.warn(`Copie de axis-nano.js échouée: ${err.message}`);
+}
 
   const files = {
     'index.html': `<!DOCTYPE html>

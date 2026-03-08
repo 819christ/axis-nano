@@ -8,7 +8,7 @@
 
 ## 🚀 Installation (One-Shot)
 ```bash
-npm install axis.nano && npm run init
+npm install axis.nano && npx axis init
 ```
 
 **C'est tout.** Vous avez une app complète, prête à l'emploi.
@@ -266,7 +266,7 @@ Les **signaux Axis** sont le pont entre le design visuel et la logique :
 |--------|--------|
 | **Taille** | 27 KB (non minifiée), ~7 KB (gzippée) |
 | **Dépendances** | Zéro |
-| **Installation** | One-shot (`npm install && npm run init`) |
+| **Installation** | One-shot (`npm install && npx axis init`) |
 | **Configuration** | Zéro config (tout auto-détecté) |
 | **Sécurité** | Web Crypto natif, HMAC-SHA256 |
 | **Isolation** | Shadow DOM par vue |
@@ -365,7 +365,7 @@ npm run serve           # Serveur simple (sans live-reload)
 **AXIS NANO** respecte trois piliers inviolables :
 
 1. **One-Shot Installation**
-   - `npm install axis.nano && npm run init`
+   - `npm install axis.nano && npx axis init`
    - Structure complète créée
    - Npm n'est plus nécessaire après
 
@@ -398,7 +398,7 @@ MIT — Libre d'utiliser, modifier et redistribuer.
 ## 🎉 Démarrer Maintenant
 ```bash
 npm install axis.nano
-npm run init
+npx axis init
 npm run dev
 ```
 
