@@ -1,11 +1,10 @@
 {
   "name": "axis.nano",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "⬡ Decentralized ultra-lightweight & secure framework | One-Shot Installation | AI-Ready",
   "main": "axis-nano.js",
-  "types": "axis-nano.d.ts",
   "bin": {
-    "axis": "axis-nano.js"
+    "axis": "scripts/init-axis.js"
   },
   "scripts": {
     "init": "node scripts/init-axis.js",
@@ -19,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/axis-nano/axis-nano.git"
+    "url": "https://github.com/819christ/axis-nano.git"
   },
   "keywords": [
     "framework",
@@ -42,7 +41,7 @@
   "license": "MIT",
   "homepage": "https://axis.nano",
   "bugs": {
-    "url": "https://github.com/axis-nano/axis-nano/issues"
+    "url": "https://github.com/819christ/axis-nano/issues"
   },
   "engines": {
     "node": ">=12.0.0"
