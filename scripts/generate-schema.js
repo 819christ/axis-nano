@@ -2,7 +2,7 @@
 
 /**
  * ╔══════════════════════════════════════════════════════════════════════════╗
- * ║           AXIS NANO v1.0 — Schema Generator (IA-Ready)                  ║
+ * ║           AXIS NANO v1.0.2 — Schema Generator (IA-Ready)                ║
  * ║                                                                          ║
  * ║  Génère automatiquement axis.schema.json en scannant:                   ║
  * ║    • La structure du projet                                             ║
@@ -11,6 +11,7 @@
  * ║                                                                          ║
  * ║  Lancement: npm run schema                                              ║
  * ║  Output: axis.schema.json (utilisable par l'IA)                        ║
+ * ║  Version robuste pour structure encapsulée node_modules                 ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -59,65 +60,66 @@ function scanViews(projectDir) {
     return views;
   }
 
-  const files = fs.readdirSync(vueDir);
+  try {
+    const files = fs.readdirSync(vueDir);
 
-  files
-    .filter(f => f.endsWith('.html'))
-    .forEach(htmlFile => {
-      const viewName = htmlFile.replace('.html', '');
-      const htmlPath = path.join(vueDir, htmlFile);
-      const cssPath = path.join(vueDir, `${viewName}.css`);
-      const jsPath = path.join(vueDir, `${viewName}.js`);
+    files
+      .filter(f => f.endsWith('.html'))
+      .forEach(htmlFile => {
+        const viewName = htmlFile.replace('.html', '');
+        const htmlPath = path.join(vueDir, htmlFile);
+        const cssPath = path.join(vueDir, `${viewName}.css`);
+        const jsPath = path.join(vueDir, `${viewName}.js`);
 
-      const hasCSS = fs.existsSync(cssPath);
-      const hasJS = fs.existsSync(jsPath);
+        const hasCSS = fs.existsSync(cssPath);
+        const hasJS = fs.existsSync(jsPath);
 
-      const viewData = {
-        path: `/vue/${htmlFile}`,
-        files: {
-          html: htmlFile,
-          css: hasCSS ? `${viewName}.css` : null,
-          js: hasJS ? `${viewName}.js` : null
+        const viewData = {
+          path: `/vue/${htmlFile}`,
+          files: {
+            html: htmlFile,
+            css: hasCSS ? `${viewName}.css` : null,
+            js: hasJS ? `${viewName}.js` : null
+          }
+        };
+
+        if (hasJS) {
+          try {
+            const jsContent = fs.readFileSync(jsPath, 'utf-8');
+            viewData.exports = {
+              functions: extractFunctions(jsContent)
+            };
+          } catch (err) {
+            log.info(`Impossible de parser ${viewName}.js`);
+          }
         }
-      };
 
-      // Extraire les fonctions exportées
-      if (hasJS) {
-        try {
-          const jsContent = fs.readFileSync(jsPath, 'utf-8');
-          viewData.exports = {
-            functions: extractFunctions(jsContent)
-          };
-        } catch (err) {
-          log.info(`Impossible de parser ${viewName}.js`);
-        }
-      }
-
-      views[viewName] = viewData;
-    });
+        views[viewName] = viewData;
+      });
+  } catch (err) {
+    log.warn(`Erreur lors du scan de /vue: ${err.message}`);
+  }
 
   return views;
 }
 
 function generateSchema(projectDir) {
   console.log('\n╔════════════════════════════════════════════════════════════════╗');
-  console.log('║        ⬡ AXIS NANO v1.0 — Schema Generation (IA-Ready)         ║');
+  console.log('║        ⬡ AXIS NANO v1.0.2 — Schema Generation (IA-Ready)       ║');
   console.log('╚════════════════════════════════════════════════════════════════╝\n');
 
-  // Scanner les vues
   const views = scanViews(projectDir);
   const viewCount = Object.keys(views).length;
 
-  // Construire le schema
   const schema = {
     meta: {
       generated: new Date().toISOString(),
-      version: '1.0.0'
+      version: '1.0.2'
     },
 
     framework: {
       name: 'axis-nano',
-      version: '1.0.0',
+      version: '1.0.2',
       description: 'Decentralized ultra-lightweight & secure framework',
       features: [
         'shadow-dom-isolation',
@@ -379,40 +381,42 @@ function generateSchema(projectDir) {
     }
   };
 
-  // Écrire le schema
-  const schemaPath = path.join(projectDir, 'axis.schema.json');
-  fs.writeFileSync(schemaPath, JSON.stringify(schema, null, 2), 'utf-8');
+  try {
+    const schemaPath = path.join(projectDir, 'axis.schema.json');
+    fs.writeFileSync(schemaPath, JSON.stringify(schema, null, 2), 'utf-8');
+    log.success(`Schema généré: axis.schema.json`);
 
-  log.success(`Schema généré: axis.schema.json`);
+    console.log('\n📊 Statistiques:');
+    console.log(`   • Vues trouvées: ${viewCount}`);
+    console.log(`   • Avec CSS: ${schema.viewStats.withCSS}`);
+    console.log(`   • Avec JS: ${schema.viewStats.withJS}`);
 
-  // Stats
-  console.log('\n📊 Statistiques:');
-  console.log(`   • Vues trouvées: ${viewCount}`);
-  console.log(`   • Avec CSS: ${schema.viewStats.withCSS}`);
-  console.log(`   • Avec JS: ${schema.viewStats.withJS}`);
+    if (viewCount > 0) {
+      console.log('\n📝 Vues détectées:');
+      Object.entries(views).forEach(([name, data]) => {
+        const files = [];
+        if (data.files.html) files.push('html');
+        if (data.files.css) files.push('css');
+        if (data.files.js) files.push('js');
+        console.log(`   • ${name} (${files.join(', ')})`);
 
-  if (viewCount > 0) {
-    console.log('\n📝 Vues détectées:');
-    Object.entries(views).forEach(([name, data]) => {
-      const files = [];
-      if (data.files.html) files.push('html');
-      if (data.files.css) files.push('css');
-      if (data.files.js) files.push('js');
-      console.log(`   • ${name} (${files.join(', ')})`);
+        if (data.exports?.functions?.length) {
+          console.log(`     Fonctions: ${data.exports.functions.join(', ')}`);
+        }
+      });
+    }
 
-      if (data.exports?.functions?.length) {
-        console.log(`     Fonctions: ${data.exports.functions.join(', ')}`);
-      }
-    });
+    console.log('\n✨ Prochaines étapes:');
+    console.log('   1. Partagez axis.schema.json avec une IA');
+    console.log('   2. L\'IA générera du code compatible avec votre projet');
+    console.log('   3. Utilisez npm run schema régulièrement après ajout de vues\n');
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('✅ Schema generé! axis.schema.json est prêt pour l\'IA.\n');
+  } catch (err) {
+    log.error(`Erreur lors de la génération du schema: ${err.message}`);
+    process.exit(1);
   }
-
-  console.log('\n✨ Prochaines étapes:');
-  console.log('   1. Partagez axis.schema.json avec une IA');
-  console.log('   2. L\'IA générera du code compatible avec votre projet');
-  console.log('   3. Utilisez generate-schema régulièrement après ajout de vues\n');
-
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('✅ Schema generé! axis.schema.json est prêt pour l\'IA.\n');
 }
 
 try {

@@ -1,4 +1,4 @@
-# AXIS ⬡ NANO v1.0 — OFFICIEL
+# ⬡ AXIS NANO v1.0.2 — OFFICIEL
 
 > **Décentralisé • Ultra-Léger • Sécurisé**
 >
@@ -8,7 +8,9 @@
 
 ## 🚀 Installation (One-Shot)
 ```bash
-npm install axis.nano && npx axis init
+npm install axis.nano
+npx axis init
+npm run dev
 ```
 
 **C'est tout.** Vous avez une app complète, prête à l'emploi.
@@ -33,14 +35,20 @@ votre-app/
 
 ## ⚡ Démarrage Rapide
 
-### 1. Lancer l'app
+### 1. Installer et initialiser
+```bash
+npm install axis.nano
+npx axis init
+```
+
+### 2. Lancer l'app
 ```bash
 npm run dev
 ```
 
 Ouvrez **http://localhost:8000**
 
-### 2. Créer une vue
+### 3. Créer une vue
 ```html
 <!-- /vue/profile.html -->
 <div class="profile">
@@ -66,7 +74,7 @@ Ouvrez **http://localhost:8000**
 </script>
 ```
 
-### 3. Naviguer
+### 4. Naviguer
 ```html
 <!-- Dans index.html ou une autre vue -->
 <button onclick="axis.navigate('profile')">Mon Profil</button>
@@ -204,8 +212,6 @@ Les requêtes auront automatiquement :
 - `X-Axis-Nonce`
 - `X-Axis-Signature`
 
-**Côté serveur** : Valider la signature.
-
 ### Isolation du Shadow DOM
 
 Chaque vue est isolée :
@@ -223,18 +229,6 @@ npm run schema
 ```
 
 Crée **axis.schema.json** que vous pouvez partager avec une IA.
-
-### Exemple d'Usage
-```
-Utilisateur → IA (via axis.schema.json) → Code compatible généré
-
-"Crée une vue de login avec:
- - Email + Password inputs
- - Submit button
- - Validation simple"
-
-L'IA lit axis.schema.json et génère du code qui marche d'emblée!
-```
 
 ### Contenu du Schema
 
@@ -256,8 +250,6 @@ Les **signaux Axis** sont le pont entre le design visuel et la logique :
 4. **Developer** écrit le JS avec les handlers
 5. **Framework relie tout** automatiquement
 
-**Aucun conflit**, pas de code injecté dans le JS, sécurité garantie.
-
 ---
 
 ## 📊 Caractéristiques
@@ -266,7 +258,7 @@ Les **signaux Axis** sont le pont entre le design visuel et la logique :
 |--------|--------|
 | **Taille** | 27 KB (non minifiée), ~7 KB (gzippée) |
 | **Dépendances** | Zéro |
-| **Installation** | One-shot (`npm install && npx axis init`) |
+| **Installation** | One-shot (`npm install axis.nano && npx axis init`) |
 | **Configuration** | Zéro config (tout auto-détecté) |
 | **Sécurité** | Web Crypto natif, HMAC-SHA256 |
 | **Isolation** | Shadow DOM par vue |
@@ -408,4 +400,4 @@ Ouvrez **http://localhost:8000**
 
 ---
 
-**AXIS⬡NANO v1.0 — Conçu pour durer, construit pour résister.**
+**⬡ AXIS NANO v1.0.2 — Conçu pour durer, construit pour résister.**

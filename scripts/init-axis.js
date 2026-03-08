@@ -2,10 +2,11 @@
 
 /**
  * ╔══════════════════════════════════════════════════════════════════════════╗
- * ║              AXIS NANO v1.0 — Postinstall Handler                       ║
+ * ║              AXIS NANO v1.0.2 — Postinstall Handler                     ║
  * ║                                                                          ║
  * ║  Exécuté automatiquement lors de: npm install axis.nano                 ║
  * ║  Lance la création de la structure et du schema                         ║
+ * ║  Version robuste pour structure encapsulée node_modules                 ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -23,10 +24,10 @@ function initAxis() {
   const projectDir = process.cwd();
 
   console.log('\n╔════════════════════════════════════════════════════════════════╗');
-  console.log('║        ⬡ AXIS NANO v1.0 — ONE-SHOT INSTALLATION                ║');
+  console.log('║        ⬡ AXIS NANO v1.0.2 — ONE-SHOT INSTALLATION                ║');
   console.log('╚════════════════════════════════════════════════════════════════╝\n');
 
-  const nodeModulesPath = path.join(projectDir, 'node_modules', 'axis-nano');
+  // Vérifier qu'on est à la racine du projet (pas dans node_modules)
   const isRootInstall = !projectDir.includes('node_modules');
 
   if (!isRootInstall) {
@@ -34,6 +35,7 @@ function initAxis() {
     return;
   }
 
+  // 1. Créer les dossiers
   const dirs = ['vue', 'documentation'];
   dirs.forEach(dir => {
     const dirPath = path.join(projectDir, dir);
@@ -44,26 +46,42 @@ function initAxis() {
       log.info(`Dossier existant: ${dir}/`);
     }
   });
-try {
-  let sourceAxis = path.join(nodeModulesPath, 'axis-nano.js');
-  
-  // Si le fichier n'existe pas au premier endroit, essayer le second
-  if (!fs.existsSync(sourceAxis)) {
-    sourceAxis = path.join(nodeModulesPath, 'axis-nano', 'axis-nano.js');
-  }
-  
-  const targetAxis = path.join(projectDir, 'axis-nano.js');
 
-  if (fs.existsSync(sourceAxis) && !fs.existsSync(targetAxis)) {
-    fs.copyFileSync(sourceAxis, targetAxis);
-    log.success('axis-nano.js déployé à la racine');
-  } else if (!fs.existsSync(targetAxis)) {
-    log.warn('axis-nano.js non trouvé. Vous devrez le copier manuellement.');
-  }
-} catch (err) {
-  log.warn(`Copie de axis-nano.js échouée: ${err.message}`);
-}
+  // 2. Copier axis-nano.js à la racine (ROBUSTE)
+  try {
+    const targetAxis = path.join(projectDir, 'axis-nano.js');
+    
+    // Si le fichier existe déjà, ne pas le re-copier
+    if (fs.existsSync(targetAxis)) {
+      log.info('axis-nano.js existe déjà à la racine');
+    } else {
+      // Essayer plusieurs chemins possibles
+      let sourceAxis = null;
+      const possiblePaths = [
+        path.join(projectDir, 'node_modules', 'axis.nano', 'axis-nano.js'),
+        path.join(projectDir, 'node_modules', 'axis-nano', 'axis-nano.js'),
+        path.join(__dirname, '..', 'axis-nano.js')
+      ];
 
+      for (const possiblePath of possiblePaths) {
+        if (fs.existsSync(possiblePath)) {
+          sourceAxis = possiblePath;
+          break;
+        }
+      }
+
+      if (sourceAxis) {
+        fs.copyFileSync(sourceAxis, targetAxis);
+        log.success('axis-nano.js déployé à la racine');
+      } else {
+        log.warn('axis-nano.js non trouvé. Copie manuelle requise: cp node_modules/axis.nano/axis-nano.js .');
+      }
+    }
+  } catch (err) {
+    log.warn(`Copie de axis-nano.js échouée: ${err.message}`);
+  }
+
+  // 3. Créer les fichiers de base (idempotent: safe si fichiers existent)
   const files = {
     'index.html': `<!DOCTYPE html>
 <html lang="fr">
@@ -144,7 +162,7 @@ input:focus, textarea:focus {
 }`,
 
     'script.js': `// Global app script
-console.log('[APP] AXIS NANO v1.0 — Application started');
+console.log('[APP] AXIS NANO v1.0.2 — Application started');
 
 // Listen to view changes
 AxisNano.on('vue:loaded', (viewName) => {
@@ -305,16 +323,13 @@ AxisNano.on('api:error', (error) => {
     const userName = axis.state.userName || 'Vous';
     const greeting = \`Bonjour, \${userName}! 👋\`;
     
-    // Afficher le message
     axis.greeting = true;
     document.querySelector('#greeting-text').textContent = greeting;
     
-    // Re-évaluer les conditions
     if (axis._evaluateConditions) {
       axis._evaluateConditions.forEach(fn => fn());
     }
     
-    // Émettre un événement
     axis.emit('welcome:greeted', { name: userName });
   }
 </script>`,
@@ -326,7 +341,9 @@ AxisNano.on('api:error', (error) => {
 ## Installation
 
 \`\`\`bash
-npm install axis.nano && npm run init
+npm install axis.nano
+npx axis init
+npm run dev
 \`\`\`
 
 ## Signaux Axis (data-axis-*)
@@ -336,10 +353,7 @@ Lier un champ formulaire à l'état de la vue.
 
 \`\`\`html
 <input data-axis-bind="email" type="email" />
-<textarea data-axis-bind="message"></textarea>
-
 <script>
-  // Accédez via axis.state
   console.log(axis.state.email);
 </script>
 \`\`\`
@@ -348,17 +362,10 @@ Lier un champ formulaire à l'état de la vue.
 Lier un événement DOM à une fonction.
 
 \`\`\`html
-<button data-axis-on="click:handleClick">Click me</button>
-<form data-axis-on="submit:handleSubmit">
-
+<button data-axis-on="click:handleClick">Click</button>
 <script>
   function handleClick(event) {
     console.log('Clicked!');
-  }
-
-  function handleSubmit(event) {
-    event.preventDefault();
-    console.log('Form submitted');
   }
 </script>
 \`\`\`
@@ -367,8 +374,7 @@ Lier un événement DOM à une fonction.
 Rendu conditionnel.
 
 \`\`\`html
-<div data-axis-if="isVisible">Only shown if isVisible is true</div>
-
+<div data-axis-if="isVisible">Contenu</div>
 <script>
   axis.isVisible = true;
 </script>
@@ -378,15 +384,9 @@ Rendu conditionnel.
 Boucle de rendu.
 
 \`\`\`html
-<ul>
-  <li data-axis-for="item in items">{{item.name}}</li>
-</ul>
-
+<li data-axis-for="item in items">{{item.name}}</li>
 <script>
-  axis.items = [
-    { name: 'Item 1' },
-    { name: 'Item 2' }
-  ];
+  axis.items = [{ name: 'Item 1' }, { name: 'Item 2' }];
 </script>
 \`\`\`
 
@@ -395,104 +395,37 @@ Boucle de rendu.
 ### Express API
 
 \`\`\`javascript
-// Initialiser
 await $AX.$_I({ debug: true });
-
-// Naviguer
 await $AX.$_N('profile');
-
-// Événements
 $AX.$_S('user:login', (user) => { ... });
 $AX.$_E('user:logout', {});
-
-// Données
 const data = await $AX.$_D('/api/users');
-
-// Crypto
 const hash = await $AX.$_C.sha256('data');
 \`\`\`
 
 ### Standard API
 
 \`\`\`javascript
-// Même API, noms différents
-await AxisNano.init();
-await AxisNano.navigate('profile');
+AxisNano.init({ debug: true });
+AxisNano.navigate('profile');
 AxisNano.on('user:login', callback);
 AxisNano.emit('user:logout', data);
-await AxisNano.data('/api/endpoint');
+await AxisNano.data('/api/users');
 await AxisNano.crypto.sha256('data');
 \`\`\`
 
-## Vues (Triplet Auto-Load)
-
-Les vues supportent le chargement automatique en triplet:
-
-- \`login.html\` (obligatoire)
-- \`login.css\` (optionnel)
-- \`login.js\` (optionnel)
-
-\`\`\`html
-<!-- /vue/login.html -->
-<form data-axis-on="submit:handleSubmit">
-  <input data-axis-bind="email" type="email" />
-  <button>Login</button>
-</form>
-
-<script>
-  function handleSubmit(event) {
-    event.preventDefault();
-    axis.data('/api/login', { 
-      body: { email: axis.state.email } 
-    });
-  }
-</script>
-\`\`\`
-
-## Sécurité
-
-### Web Crypto Intégré
+## Web Crypto
 
 \`\`\`javascript
-// SHA-256
 const hash = await axis.crypto.sha256('data');
-
-// HMAC-SHA256
 const sig = await axis.crypto.hmacSha256('message', 'secret');
-
-// Token aléatoire
 const token = axis.crypto.generateToken();
 \`\`\`
 
-### Signatures API (Optionnel)
-
-\`\`\`html
-<script src="axis-nano.js" data-axis-signature></script>
-\`\`\`
-
-Actif: Les requêtes sont signées avec HMAC-SHA256.
-
-## Génération du Schema (Pour l'IA)
+## Génération Schema (IA)
 
 \`\`\`bash
 npm run schema
-\`\`\`
-
-Génère \`axis.schema.json\` que l'IA peut lire pour générer du code compatible.
-
-## Déploiement
-
-Comme un site statique classique:
-
-\`\`\`bash
-# Serveur statique
-scp -r votre-app/ user@server:/var/www/html/
-
-# Docker
-docker build -t my-app .
-docker run -p 8000:80 my-app
-
-# CDN (GitHub Pages, Netlify, etc.)
 \`\`\`
 
 ---
@@ -517,14 +450,14 @@ docker run -p 8000:80 my-app
     }
   });
 
-  console.log('\n✅ AXIS NANO v1.0 installé avec succès!\n');
+  console.log('\n✅ AXIS NANO v1.0.2 installé avec succès!\n');
   console.log('Structure créée:');
   console.log('├── index.html');
   console.log('├── style.css');
   console.log('├── script.js');
   console.log('├── axis-nano.js');
   console.log('├── /vue');
-  console.log('│   └── accueil.html (avec signaux Axis en exemple)');
+  console.log('│   └── accueil.html');
   console.log('└── /documentation');
   console.log('    └── README.md');
   console.log('\n🚀 Prêt à démarrer!');
